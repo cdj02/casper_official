@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Code2Reggaeton</title>
+<style>
+  *{box-sizing:border-box}
+  :root{
+    --bg:#0d1117; --panel:#151b23; --panel2:#1e2632; --line:#2d3644;
+    --text:#e8edf3; --muted:#8b98a8; --ink:#0b0f14;
+    --clean:#3fb950; --smelly:#f85149; --accent:var(--clean);
+    --code-fs:15px;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  body[data-state="smelly"]{--accent:var(--smelly)}
+  html,body{height:100%;margin:0}
+  body{
+    background:var(--bg);color:var(--text);
+    font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    display:flex;flex-direction:column;height:100dvh;overflow:hidden;
+    border-top:4px solid var(--accent);transition:border-color .2s;
+  }
+  button{font:inherit;color:inherit;cursor:pointer}
+  kbd{font:12px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;
+      padding:1px 6px;background:var(--panel);color:var(--text)}
+
+  /* ---------- start / error overlay ---------- */
+  .overlay{position:fixed;inset:0;z-index:10;background:rgba(13,17,23,.97);
+           display:grid;place-items:center;text-align:center;padding:24px;cursor:pointer}
+  .overlay.hidden{display:none}
+  .overlay h1{font-size:clamp(34px,6vw,56px);margin:0 0 6px}
+  .overlay .tag{font-size:clamp(18px,2.5vw,24px);color:var(--muted);margin:0 0 22px}
+  .overlay .msg{max-width:560px;margin:0 auto 28px;font-size:18px;color:var(--text)}
+  .overlay .start{font-size:20px;color:var(--clean);font-weight:600;margin:0}
+  .overlay code{font-family:var(--mono);background:var(--panel2);padding:2px 8px;border-radius:6px}
+
+  /* ---------- header ---------- */
+  header{display:flex;align-items:center;gap:16px;padding:10px 20px;flex-wrap:wrap}
+  .brand strong{font-size:20px}
+  .brand span{color:var(--muted);margin-left:10px;font-size:14px}
+  #chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 auto}
+  .chip{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:999px;
+        padding:8px 14px;font-size:15px;display:flex;align-items:center;gap:8px}
+  .chip:hover{color:var(--text);border-color:var(--muted)}
+  .chip.active{color:var(--text);border-color:var(--text);background:var(--panel2)}
+  .tools{display:flex;gap:6px}
+  .tools button{border:1px solid var(--line);background:var(--panel);border-radius:8px;
+                min-width:40px;height:36px;padding:0 10px;font-size:14px}
+  .tools button:hover{border-color:var(--muted)}
+
+  /* ---------- layout ---------- */
+  main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(340px,400px) 1fr;gap:16px;padding:0 20px 8px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;min-height:0}
+
+  /* ---------- player ---------- */
+  #player{padding:18px;display:flex;flex-direction:column;gap:18px;overflow-y:auto}
+  .pairbar{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .pairbar button{width:52px;height:52px;border-radius:50%;border:1px solid var(--line);
+                  background:var(--panel2);font-size:28px;line-height:1;flex:none}
+  .pairbar button:hover{border-color:var(--muted)}
+  .pairinfo{text-align:center;min-width:0}
+  .smell{color:var(--accent);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:14px}
+  .pairname{font-size:32px;font-weight:700;line-height:1.15}
+  .count{color:var(--muted);font-size:14px}
+
+  .toggle{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .toggle button{height:78px;border-radius:12px;border:2px solid var(--line);background:var(--panel2);
+                 color:var(--muted);font-size:26px;font-weight:700}
+  .toggle button:hover{border-color:var(--muted);color:var(--text)}
+  .toggle button[data-state="clean"][aria-pressed="true"]{background:var(--clean);border-color:var(--clean);color:var(--ink)}
+  .toggle button[data-state="smelly"][aria-pressed="true"]{background:var(--smelly);border-color:var(--smelly);color:var(--ink)}
+  .hint{text-align:center;color:var(--muted);font-size:14px;margin-top:-8px}
+
+  .status{min-height:22px;font-size:14px;color:var(--muted);text-align:center;margin-top:-6px}
+  .status[data-kind="playing"]::before{content:"\25CF  ";color:var(--accent)}
+  .status[data-kind="error"]{color:var(--smelly)}
+
+  .meters{display:grid;gap:16px}
+  .meter .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .meter .name{font-weight:700;font-size:17px}
+  .meter .val{font:14px var(--mono);color:var(--muted)}
+  .meter .sub{color:var(--muted);font-size:12px;letter-spacing:.03em;margin-bottom:6px}
+  .track{height:14px;border-radius:7px;background:#0f141b;position:relative}
+  .fill{height:100%;border-radius:7px;background:var(--accent);width:0;transition:width .3s ease,background-color .2s}
+  .mark{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:var(--text);opacity:.75;
+        transition:left .3s ease}
+  .info{color:var(--muted);font-size:13px;margin-top:6px}
+  .legend{color:var(--muted);font-size:12px;display:flex;align-items:center;gap:8px}
+  .legend i{display:inline-block;width:2px;height:12px;background:var(--text);opacity:.75}
+
+  .controls{display:flex;align-items:center;gap:14px;margin-top:auto}
+  #btn-play{border:1px solid var(--line);background:var(--panel2);border-radius:10px;padding:10px 18px;min-width:108px;font-weight:600}
+  #btn-play:hover{border-color:var(--muted)}
+  .controls label{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px;flex:1}
+  #vol{flex:1;accent-color:var(--accent);min-width:60px}
+
+  /* ---------- code viewer ---------- */
+  #code{display:flex;flex-direction:column;overflow:hidden}
+  .code-head{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .badge{background:var(--accent);color:var(--ink);font-weight:800;font-size:12px;border-radius:6px;padding:3px 9px;letter-spacing:.08em}
+  #code-file{font:14px var(--mono)}
+  #code-lines{margin-left:auto;color:var(--muted);font-size:14px}
+  #code-lines b{color:var(--text)}
+  .code-body{flex:1;min-height:0;display:flex}
+  #scroller{flex:1;min-width:0;overflow:auto;background:var(--bg);outline:none}
+  .code-inner{display:flex;min-width:max-content;padding:12px 0 28px}
+  .code-inner pre{margin:0;font:var(--code-fs)/1.5 var(--mono);tab-size:4}
+  #gutter{position:sticky;left:0;background:var(--bg);color:#4d5a6b;text-align:right;
+          padding:0 14px 0 16px;border-right:1px solid var(--line);user-select:none}
+  #src{padding:0 28px 0 16px}
+  .kw{color:#ff7b72}.ty{color:#ffa657}.fn{color:#d2a8ff}.str{color:#a5d6ff}
+  .num,.lit{color:#79c0ff}.an{color:#d2a8ff}.cm{color:#7d8896;font-style:italic}
+
+  #minimap-wrap{width:96px;flex:none;border-left:1px solid var(--line);background:#0f151d;
+                position:relative;overflow:hidden;cursor:pointer;touch-action:none}
+  #minimap{display:block}
+  #minimap-vp{position:absolute;left:0;right:0;background:rgba(255,255,255,.10);
+              border-top:1px solid rgba(255,255,255,.35);border-bottom:1px solid rgba(255,255,255,.35);pointer-events:none}
+
+  /* ---------- footer ---------- */
+  footer{padding:6px 20px 12px;color:var(--muted);font-size:14px;display:flex;gap:6px 20px;flex-wrap:wrap;justify-content:center}
+  footer span{white-space:nowrap}
+
+  /* Projector-friendly: 1024x768 and 1280x720 must fit without scrolling the control panel */
+  @media (max-width:1150px){
+    .brand span{display:none}
+    .chip{padding:6px 11px;font-size:14px}
+    header{padding:8px 16px}
+  }
+  @media (max-height:820px){
+    header{padding-top:6px;padding-bottom:6px}
+    #player{padding:14px;gap:12px}
+    .pairbar button{width:44px;height:44px}
+    .pairname{font-size:28px}
+    .toggle button{height:62px;font-size:22px}
+    .meters{gap:11px}
+    .meter .sub{margin-bottom:4px}
+    .info{margin-top:4px}
+    .legend{margin-top:10px !important}
+    footer{padding-bottom:8px}
+  }
+  @media (max-width:980px){
+    body{height:auto;min-height:100dvh;overflow:auto}
+    main{grid-template-columns:1fr}
+    #code{height:70vh}
+    #chips{margin:0}
+  }
+  @media (max-width:600px){
+    footer{display:none}
+    #minimap-wrap{width:64px}
+  }
+</style>
+</head>
+<body data-state="clean">
+
+<div id="overlay" class="overlay" role="button" tabindex="0">
+  <div>
+    <h1>Code2Reggaeton</h1>
+    <p class="tag">NOTE: Upon entering this website, sound will start playing!</p>
+    <p class="msg" id="overlay-msg">Every program here comes in two versions, clean and smelly, and each one has been turned into a reggaeton beat. Flip between them and listen.</p>
+    <p class="start" id="overlay-start">Loading&hellip;</p>
+  </div>
+</div>
+
+<header>
+  <div class="brand"><strong>Code2Reggaeton</strong></div>
+  <nav id="chips" aria-label="Code smell category"></nav>
+  <div class="tools">
+    <button id="fs-minus" title="Smaller code text (-)" aria-label="Smaller code text">A&minus;</button>
+    <button id="fs-plus" title="Larger code text (+)" aria-label="Larger code text">A+</button>
+    <button id="btn-fullscreen" title="Fullscreen (F)" aria-label="Toggle fullscreen">&#x26F6;</button>
+  </div>
+</header>
+
+<main>
+  <section id="player" class="panel" aria-label="Player">
+    <div class="pairbar">
+      <button id="prev" aria-label="Previous pair">&lsaquo;</button>
+      <div class="pairinfo">
+        <div id="smell-name" class="smell"></div>
+        <div id="pair-name" class="pairname"></div>
+        <div id="pair-count" class="count"></div>
+      </div>
+      <button id="next" aria-label="Next pair">&rsaquo;</button>
+    </div>
+
+    <div class="toggle" role="group" aria-label="Version">
+      <button id="btn-clean" data-state="clean" aria-pressed="true">Clean</button>
+      <button id="btn-smelly" data-state="smelly" aria-pressed="false">Smelly</button>
+    </div>
+    <div class="hint">Press <kbd>Space</kbd> to switch</div>
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+
+    <div>
+      <div id="meters" class="meters"></div>
+      <div class="legend" style="margin-top:14px"><i></i> marks the other version</div>
+    </div>
+
+    <div class="controls">
+      <button id="btn-play">Pause</button>
+      <label>Volume <input id="vol" type="range" min="0" max="1" step="0.01" value="0.8" aria-label="Volume"></label>
+    </div>
+  </section>
+
+  <section id="code" class="panel" aria-label="Source code">
+    <div class="code-head">
+      <span id="code-badge" class="badge">CLEAN</span>
+      <span id="code-file"></span>
+      <span id="code-lines"></span>
+    </div>
+    <div class="code-body">
+      <div id="scroller" tabindex="-1">
+        <div class="code-inner"><pre id="gutter"></pre><pre id="src"></pre></div>
+      </div>
+      <div id="minimap-wrap" title="Click or drag to jump">
+        <canvas id="minimap"></canvas>
+        <div id="minimap-vp"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span><kbd>Space</kbd> clean &#8646; smelly</span>
+  <span><kbd>&larr;</kbd> <kbd>&rarr;</kbd> pair</span>
+  <span><kbd>&uarr;</kbd> <kbd>&darr;</kbd> scroll code</span>
+  <span><kbd>1</kbd>&ndash;<kbd>4</kbd> smell type</span>
+  <span><kbd>P</kbd> pause</span>
+  <span><kbd>+</kbd> <kbd>&minus;</kbd> text size</span>
+  <span><kbd>F</kbd> fullscreen</span>
+</footer>
+
+<script>
+'use strict';
+
+/* =====================================================================
+   CONFIG  -  the only place you should need to edit if your file names differ
+   ===================================================================== */
+const CONFIG = {
+  dataUrl:   'data/sonification_data.json',                 // same JSON the SuperCollider workbench reads
+  audioPath: (id, state) => `data/audio/${id}_${state}.mp3`, // state is 'clean' or 'smelly'
+  codePath:  (id, state) => `data/code/${id}_${state}.java`,
+  audioCacheSize: 12                                         // decoded sounds kept in memory
+};
+/* Per-entry override: add "audio": "..." and/or "code": "..." next to "metrics" in the JSON. */
+
+/* =====================================================================
+   State + helpers
+   ===================================================================== */
+const S = { pairs: [], cats: [], idx: 0, state: 'clean', playing: true,
+            started: false, ready: false, volume: 0.8, fs: 15, rawLines: [] };
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const pretty = s => String(s).replace(/[_-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+const otherState = st => st === 'clean' ? 'smelly' : 'clean';
+const current = () => S.pairs[S.idx];
+const clamp01 = v => Math.min(1, Math.max(0, Number(v) || 0));
+
+function urlFor(kind, pair, state) {
+  const e = pair[state] || {};
+  return e[kind] || CONFIG[kind + 'Path'](pair.id, state, pair.smell);
+}
+function metricsOf(pair, state) {
+  const m = (pair[state] && pair[state].metrics) || null;
+  return m ? { wmc: clamp01(m.wmc), cbo: clamp01(m.cbo), lcom: clamp01(m.lcom) } : null;
+}
+/* Macro-level smells use WMC/CBO/LCOM; method-level smells route MLOC/CYCLO/ATFD into the same three channels. */
+const isMethodLevel = smell => /method|envy/i.test(smell);
+
+/* Derived readouts, taken from the SuperCollider engine's mappings. */
+const bpm = w => 15 * 4.66 * Math.pow(9.33 / 4.66, (Math.min(Math.max(w, 0.001), 1) - 0.001) / 0.999);
+const METERS = [
+  { key: 'wmc',  name: 'Speed',       sub: 'Event density',      info: v => `\u2248 ${Math.round(bpm(v))} BPM` },
+  { key: 'cbo',  name: 'Roughness',   sub: 'Spectral roughness', info: v => `bass beating at ${(v * 25).toFixed(1)} Hz` },
+  { key: 'lcom', name: 'Out of tune', sub: 'Inharmonicity',      info: v => `melody partials detuned up to ${Math.round(v * 27)}%` }
+];
+
+/* =====================================================================
+   Sound  -  Web Audio, gapless loops, instant A/B switching
+   ===================================================================== */
+const Sound = {
+  ctx: null, master: null, voice: null, token: 0, cache: new Map(),
+
+  init() {
+    if (this.ctx) return;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    this.ctx = new AC();
+    this.master = this.ctx.createGain();
+    this.master.gain.value = S.volume * S.volume;
+    this.master.connect(this.ctx.destination);
+  },
+  setVolume(v) {
+    if (this.master) this.master.gain.setTargetAtTime(v * v, this.ctx.currentTime, 0.02);
+  },
+  load(url) {
+    let p = this.cache.get(url);
+    if (p) { this.cache.delete(url); this.cache.set(url, p); return p; }   // keep most-recently-used last
+    p = fetch(url)
+      .then(r => { if (!r.ok) throw new Error(`${r.status} ${url}`); return r.arrayBuffer(); })
+      .then(b => this.ctx.decodeAudioData(b));
+    p.catch(() => this.cache.delete(url));
+    this.cache.set(url, p);
+    this.trim();
+    return p;
+  },
+  trim() {
+    if (this.cache.size <= CONFIG.audioCacheSize) return;
+    const keep = new Set(neighbourhood().map(([i, st]) => urlFor('audio', S.pairs[i], st)));
+    for (const k of this.cache.keys()) {
+      if (this.cache.size <= CONFIG.audioCacheSize) break;
+      if (!keep.has(k)) this.cache.delete(k);
+    }
+  },
+  /* Restarts from the first beat, like re-creating the synth in the SuperCollider workbench. */
+  async play(url) {
+    const my = ++this.token;
+    const slow = setTimeout(() => { if (my === this.token) setStatus('loading'); }, 150);
+    let buf;
+    try { buf = await this.load(url); }
+    catch (e) {
+      clearTimeout(slow);
+      if (my === this.token) { this.stopVoice(0.02); setStatus('error', url); }
+      return;
+    }
+    clearTimeout(slow);
+    if (my !== this.token) return;                       // a newer request superseded this one
+    if (this.ctx.state === 'suspended') await this.ctx.resume();
+    if (my !== this.token) return;
+    const now = this.ctx.currentTime;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    const g = this.ctx.createGain();
+    src.connect(g); g.connect(this.master);
+    this.stopVoice(0.012);                               // tiny fade on the old sound, new one starts on the beat
+    src.start(now);
+    this.voice = { src, g };
+    setStatus('playing');
+  },
+  stopVoice(fade) {
+    const v = this.voice; if (!v) return;
+    this.voice = null;
+    const t = this.ctx.currentTime;
+    v.g.gain.cancelScheduledValues(t);
+    v.g.gain.setValueAtTime(v.g.gain.value, t);
+    v.g.gain.linearRampToValueAtTime(0, t + fade);
+    v.src.stop(t + fade + 0.01);
+  },
+  stop() { this.token++; if (this.ctx) this.stopVoice(0.03); }
+};
+
+/* The pairs whose sounds we keep warm: current, previous, next (both versions each). */
+function neighbourhood() {
+  const n = S.pairs.length, out = [];
+  for (const i of [S.idx, (S.idx + 1) % n, (S.idx - 1 + n) % n])
+    for (const st of ['clean', 'smelly']) out.push([i, st]);
+  return out;
+}
+function prefetch() {
+  for (const [i, st] of neighbourhood()) {
+    const p = S.pairs[i];
+    Sound.load(urlFor('audio', p, st)).catch(() => {});
+    fetchText(urlFor('code', p, st)).catch(() => {});
+  }
+}
+
+/* =====================================================================
+   UI: rendering
+   ===================================================================== */
+function setStatus(kind, detail) {
+  const el = $('status');
+  S.status = kind;
+  el.dataset.kind = kind;
+  el.textContent = kind === 'error' ? `Couldn\u2019t load sound: ${detail}`
+    : ({ playing: 'Playing \u00B7 looping', paused: 'Paused', loading: 'Loading sound\u2026' })[kind] || '';
+  updatePlayButton();
+}
+function updatePlayButton() {
+  $('btn-play').textContent = S.playing ? '\u275A\u275A  Pause' : '\u25B6  Play';
+}
+
+function buildMeters() {
+  $('meters').innerHTML = METERS.map(m => `
+    <div class="meter" id="m-${m.key}">
+      <div class="row"><span class="name">${m.name}</span><span class="val"></span></div>
+      <div class="sub"></div>
+      <div class="track"><div class="fill"></div><div class="mark"></div></div>
+      <div class="info"></div>
+    </div>`).join('');
+}
+
+function render() {
+  const p = current(), st = S.state;
+  document.body.dataset.state = st;
+  $('smell-name').textContent = pretty(p.smell);
+  $('pair-name').textContent = pretty(p.id);
+  $('pair-count').textContent = `${S.idx + 1} of ${S.pairs.length}`;
+  for (const s of ['clean', 'smelly']) $('btn-' + s).setAttribute('aria-pressed', String(s === st));
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.smell === p.smell));
+  $('code-badge').textContent = st.toUpperCase();
+
+  const now = metricsOf(p, st), other = metricsOf(p, otherState(st));
+  const channel = isMethodLevel(p.smell) ? ['MLOC', 'CYCLO', 'ATFD'] : ['WMC', 'CBO', 'LCOM'];
+  METERS.forEach((m, i) => {
+    const el = $('m-' + m.key), v = now ? now[m.key] : 0;
+    el.querySelector('.val').textContent = now ? v.toFixed(2) : '\u2013';
+    el.querySelector('.sub').textContent = `${m.sub} \u00B7 ${channel[i]}`;
+    el.querySelector('.fill').style.width = (v * 100) + '%';
+    const mark = el.querySelector('.mark');
+    mark.style.display = other ? 'block' : 'none';
+    if (other) mark.style.left = (other[m.key] * 100) + '%';
+    el.querySelector('.info').textContent = now ? m.info(v) : '';
+  });
+  updatePlayButton();
+}
+
+/* =====================================================================
+   Code viewer: tiny Java highlighter, line numbers, minimap
+   ===================================================================== */
+const KW = new Set(('abstract assert boolean break byte case catch char class const continue default do double else enum ' +
+  'extends final finally float for goto if implements import instanceof int interface long native new package private ' +
+  'protected public return short static strictfp super switch synchronized this throw throws transient try void volatile ' +
+  'while var record sealed permits yield').split(' '));
+const LIT = new Set(['true', 'false', 'null']);
+const TOKEN = /(\/\*[\s\S]*?(?:\*\/|$))|(\/\/[^\n]*)|("(?:\\.|[^"\\\n])*"?|'(?:\\.|[^'\\\n])*'?)|(@[A-Za-z_]\w*)|(\b0[xX][0-9a-fA-F_]+[lL]?\b|\b\d[\d_]*(?:\.\d+)?(?:[eE][+-]?\d+)?[fFdDlL]?\b)|([A-Za-z_$][\w$]*)/g;
+
+function highlightJava(src) {
+  const segs = []; let last = 0, m;
+  TOKEN.lastIndex = 0;
+  while ((m = TOKEN.exec(src))) {
+    if (m[0].length === 0) { TOKEN.lastIndex++; continue; }
+    if (m.index > last) segs.push(['', src.slice(last, m.index)]);
+    let cls = '';
+    if (m[1] || m[2]) cls = 'cm';
+    else if (m[3]) cls = 'str';
+    else if (m[4]) cls = 'an';
+    else if (m[5]) cls = 'num';
+    else if (m[6]) {
+      const w = m[6];
+      if (KW.has(w)) cls = 'kw';
+      else if (LIT.has(w)) cls = 'lit';
+      else if (/^[A-Z]/.test(w)) cls = 'ty';
+      else if (/^\s*\(/.test(src.substr(TOKEN.lastIndex, 12))) cls = 'fn';
+    }
+    segs.push([cls, m[0]]);
+    last = TOKEN.lastIndex;
+  }
+  if (last < src.length) segs.push(['', src.slice(last)]);
+  // Split tokens into lines (block comments can span several).
+  const lines = []; let cur = '';
+  for (const [cls, text] of segs) {
+    text.split('\n').forEach((part, i) => {
+      if (i > 0) { lines.push(cur); cur = ''; }
+      if (part) cur += cls ? `<span class="${cls}">${esc(part)}</span>` : esc(part);
+    });
+  }
+  lines.push(cur);
+  return lines;
+}
+
+const codeCache = new Map();
+function fetchText(url) {
+  let p = codeCache.get(url);
+  if (!p) {
+    p = fetch(url).then(r => { if (!r.ok) throw new Error(`${r.status} ${url}`); return r.text(); });
+    p.catch(() => codeCache.delete(url));
+    codeCache.set(url, p);
+  }
+  return p;
+}
+const normalise = t => t.replace(/\r\n?/g, '\n').replace(/\n$/, '');
+
+let codeToken = 0;
+async function showCode() {
+  const my = ++codeToken, p = current(), st = S.state;
+  const url = urlFor('code', p, st);
+  $('code-file').textContent = url.split('/').pop();
+  $('code-lines').textContent = '';
+  let text;
+  try { text = await fetchText(url); }
+  catch (e) { if (my === codeToken) paintCode(`// Code file not found: ${url}`, true); return; }
+  if (my !== codeToken) return;
+  const src = normalise(text);
+  paintCode(src);
+  const n = src.split('\n').length;
+  $('code-lines').innerHTML = `<b>${n} lines</b>`;
+  fetchText(urlFor('code', p, otherState(st))).then(t => {
+    if (my !== codeToken) return;
+    $('code-lines').innerHTML = `<b>${n} lines</b> &nbsp;\u00B7&nbsp; ${otherState(st)} version: ${normalise(t).split('\n').length} lines`;
+  }).catch(() => {});
+}
+
+function paintCode(src, missing) {
+  const lines = highlightJava(src);
+  $('gutter').textContent = missing ? '' : lines.map((_, i) => i + 1).join('\n');
+  $('src').innerHTML = lines.join('\n');
+  S.rawLines = missing ? [] : src.split('\n');
+  const sc = $('scroller'); sc.scrollTop = 0; sc.scrollLeft = 0;
+  drawMinimap();
+}
+
+/* Minimap: one thin bar per line, so you can see the *shape* of the file (a smelly class is a wall). */
+const MM = { contentH: 0 };
+function drawMinimap() {
+  const wrap = $('minimap-wrap'), cv = $('minimap');
+  const W = wrap.clientWidth, H = wrap.clientHeight, dpr = window.devicePixelRatio || 1;
+  if (!W || !H) return;
+  cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
+  const n = S.rawLines.length, lh = Math.min(4, H / Math.max(n, 1)), sx = (W - 12) / 90;
+  MM.contentH = n * lh;
+  S.rawLines.forEach((raw, i) => {
+    const line = raw.replace(/\t/g, '    '), t = line.trimStart(); if (!t) return;
+    const indent = Math.min(line.length - t.length, 40), len = Math.min(t.trimEnd().length, 90 - indent);
+    c.fillStyle = /^(\/\/|\/\*|\*)/.test(t) ? 'rgba(139,152,168,.35)' : 'rgba(232,237,243,.6)';
+    c.fillRect(6 + indent * sx, i * lh, Math.max(1, len * sx), Math.max(0.8, lh * 0.7));
+  });
+  updateViewport();
+}
+function updateViewport() {
+  const sc = $('scroller'), vp = $('minimap-vp'), total = sc.scrollHeight, ch = sc.clientHeight;
+  if (!S.rawLines.length || total <= ch + 1) { vp.style.display = 'none'; return; }
+  vp.style.display = 'block';
+  vp.style.top = (sc.scrollTop / total * MM.contentH) + 'px';
+  vp.style.height = Math.max(6, ch / total * MM.contentH) + 'px';
+}
+let mmDrag = false;
+function mmScrollTo(clientY) {
+  const sc = $('scroller'), r = $('minimap-wrap').getBoundingClientRect();
+  const frac = Math.min(1, Math.max(0, (clientY - r.top) / Math.max(MM.contentH, 1)));
+  sc.scrollTop = frac * sc.scrollHeight - sc.clientHeight / 2;
+}
+$('minimap-wrap').addEventListener('pointerdown', e => { e.currentTarget.setPointerCapture(e.pointerId); mmDrag = true; mmScrollTo(e.clientY); });
+$('minimap-wrap').addEventListener('pointermove', e => { if (mmDrag) mmScrollTo(e.clientY); });
+$('minimap-wrap').addEventListener('pointerup', () => { mmDrag = false; });
+$('minimap-wrap').addEventListener('pointercancel', () => { mmDrag = false; });
+$('scroller').addEventListener('scroll', updateViewport, { passive: true });
+new ResizeObserver(() => drawMinimap()).observe($('minimap-wrap'));
+
+function setFontSize(px) {
+  S.fs = Math.min(30, Math.max(11, px));
+  document.documentElement.style.setProperty('--code-fs', S.fs + 'px');
+  try { localStorage.setItem('c2r-fs', String(S.fs)); } catch (e) {}
+  updateViewport();
+}
+
+/* =====================================================================
+   Actions
+   ===================================================================== */
+function playNow() { Sound.play(urlFor('audio', current(), S.state)); }
+
+function goto(i, state) {
+  const n = S.pairs.length;
+  S.idx = ((i % n) + n) % n; S.state = state || 'clean'; S.playing = true;
+  render(); showCode(); playNow(); setTimeout(prefetch, 400);
+}
+function setState(st) {
+  if (st === S.state && S.playing) return;
+  S.state = st; S.playing = true;
+  render(); showCode(); playNow();
+}
+function togglePlay() {
+  if (S.playing) { S.playing = false; Sound.stop(); setStatus('paused'); }
+  else { S.playing = true; setStatus('loading'); playNow(); }
+}
+function jumpToCategory(k) {
+  const cat = S.cats[k]; if (cat === undefined) return;
+  const i = S.pairs.findIndex(p => p.smell === cat);
+  if (i >= 0) goto(i);
+}
+function toggleFullscreen() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => {});
+}
+
+/* =====================================================================
+   Input
+   ===================================================================== */
+const held = { up: false, down: false }; let heldSince = 0, raf = 0, lastT = 0;
+function scrollLoop(t) {
+  if (!held.up && !held.down) { raf = 0; return; }
+  const dt = Math.min(0.05, (t - lastT) / 1000); lastT = t;
+  if (t - heldSince > 250)                                   // a tap nudges; holding glides
+    $('scroller').scrollTop += (held.down ? 1 : -1) * 900 * (S.fs / 15) * dt;
+  raf = requestAnimationFrame(scrollLoop);
+}
+function startScroll(dir) {
+  const key = dir > 0 ? 'down' : 'up';
+  if (held[key]) return;
+  held[key] = true; heldSince = performance.now(); lastT = heldSince;
+  $('scroller').scrollTop += dir * S.fs * 1.5 * 3;
+  if (!raf) raf = requestAnimationFrame(scrollLoop);
+}
+function stopScroll(dir) { held[dir > 0 ? 'down' : 'up'] = false; }
+
+async function start() {
+  if (S.started || !S.ready) return;
+  S.started = true;
+  Sound.init();
+  try { await Sound.ctx.resume(); } catch (e) {}
+  $('overlay').classList.add('hidden');
+  goto(S.idx);
+}
+
+window.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (!S.started) { if (S.ready) { e.preventDefault(); start(); } return; }
+  const sc = $('scroller');
+  switch (e.key) {
+    case ' ':          e.preventDefault(); if (!e.repeat) setState(otherState(S.state)); break;
+    case 'ArrowRight': e.preventDefault(); if (!e.repeat) goto(S.idx + 1); break;
+    case 'ArrowLeft':  e.preventDefault(); if (!e.repeat) goto(S.idx - 1); break;
+    case 'ArrowDown':  e.preventDefault(); startScroll(1); break;
+    case 'ArrowUp':    e.preventDefault(); startScroll(-1); break;
+    case 'PageDown':   e.preventDefault(); sc.scrollBy({ top: sc.clientHeight * 0.9, behavior: 'smooth' }); break;
+    case 'PageUp':     e.preventDefault(); sc.scrollBy({ top: -sc.clientHeight * 0.9, behavior: 'smooth' }); break;
+    case 'Home':       e.preventDefault(); sc.scrollTo({ top: 0, behavior: 'smooth' }); break;
+    case 'End':        e.preventDefault(); sc.scrollTo({ top: sc.scrollHeight, behavior: 'smooth' }); break;
+    case 'p': case 'P': if (!e.repeat) togglePlay(); break;
+    case 'f': case 'F': if (!e.repeat) toggleFullscreen(); break;
+    case '+': case '=': setFontSize(S.fs + 1); break;
+    case '-': case '_': setFontSize(S.fs - 1); break;
+    default:
+      if (/^[1-9]$/.test(e.key)) jumpToCategory(Number(e.key) - 1);
+  }
+});
+window.addEventListener('keyup', e => {
+  if (e.key === ' ') e.preventDefault();                     // stops a focused button from also "clicking"
+  if (e.key === 'ArrowDown') stopScroll(1);
+  if (e.key === 'ArrowUp') stopScroll(-1);
+});
+window.addEventListener('blur', () => { held.up = held.down = false; });
+
+document.addEventListener('mousedown', e => { if (e.target.closest('button')) e.preventDefault(); });  // keep keys working after clicks
+$('overlay').addEventListener('pointerdown', () => start());
+$('prev').addEventListener('click', () => goto(S.idx - 1));
+$('next').addEventListener('click', () => goto(S.idx + 1));
+$('btn-clean').addEventListener('click', () => setState('clean'));
+$('btn-smelly').addEventListener('click', () => setState('smelly'));
+$('btn-play').addEventListener('click', togglePlay);
+$('fs-plus').addEventListener('click', () => setFontSize(S.fs + 1));
+$('fs-minus').addEventListener('click', () => setFontSize(S.fs - 1));
+$('btn-fullscreen').addEventListener('click', toggleFullscreen);
+$('vol').addEventListener('input', e => { S.volume = Number(e.target.value); Sound.setVolume(S.volume); });
+$('vol').addEventListener('change', e => e.target.blur());  // give the arrow keys back to the app
+
+/* =====================================================================
+   Boot: load the same JSON the SuperCollider workbench uses
+   ===================================================================== */
+async function boot() {
+  try { const v = Number(localStorage.getItem('c2r-fs')); if (v) setFontSize(v); } catch (e) {}
+  buildMeters();
+  try {
+    const res = await fetch(CONFIG.dataUrl);
+    if (!res.ok) throw new Error(`${res.status} ${CONFIG.dataUrl}`);
+    const raw = await res.json();
+    for (const [smell, group] of Object.entries(raw))
+      for (const [id, d] of Object.entries(group))
+        S.pairs.push({ id, smell, clean: d.clean || {}, smelly: d.smelly || {} });
+    if (!S.pairs.length) throw new Error('no pairs found in ' + CONFIG.dataUrl);
+    S.pairs.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
+    S.cats = [...new Set(S.pairs.map(p => p.smell))];
+    $('chips').innerHTML = S.cats.map((c, i) =>
+      `<button class="chip" data-smell="${esc(c)}">${i < 9 ? `<kbd>${i + 1}</kbd>` : ''}${esc(pretty(c))}</button>`).join('');
+    $('chips').addEventListener('click', e => {
+      const b = e.target.closest('.chip'); if (b) jumpToCategory(S.cats.indexOf(b.dataset.smell));
+    });
+    S.ready = true;
+    render(); showCode();
+    $('overlay-start').textContent = 'Press any key or tap to start';
+  } catch (err) {
+    $('overlay-msg').innerHTML = location.protocol === 'file:'
+      ? 'Browsers block local files when a page is opened by double-click. Start a tiny local server instead: open a terminal in this folder and run <code>python3 -m http.server 8000</code>, then visit <code>http://localhost:8000</code>.'
+      : `Couldn\u2019t load the data (${esc(String(err.message))}). Check <code>${CONFIG.dataUrl}</code>.`;
+    $('overlay-start').textContent = '';
+  }
+}
+boot();
+</script>
+</body>
+</html>

@@ -1,0 +1,370 @@
+{
+    "blob": {
+        "pair_01": {
+            "repository": "git@github.com:eclipse/dawnsci.git",
+            "structure_type": "class",
+            "smelly": {
+                "metrics": {
+                    "wmc": 1.0,
+                    "cbo": 0.2903225806451613,
+                    "lcom": 1.0
+                }
+            },
+            "clean": {
+                "metrics": {
+                    "wmc": 0.3630573248407643,
+                    "cbo": 0.16129032258064516,
+                    "lcom": 0.38074398249452956
+                }
+            }
+        },
+        "pair_02": {
+            "repository": "git@github.com:eclipse/ditto.git",
+            "structure_type": "class",
+            "smelly": {
+                "metrics": {
+                    "wmc": 0.17197452229299362,
+                    "cbo": 0.9354838709677419,
+                    "lcom": 0.09409190371991247
+                }
+            },
+            "clean": {
+                "metrics": {
+                    "wmc": 0.006369426751592357,
+                    "cbo": 0.12903225806451613,
+                    "lcom": 0.0
+                }
+            }
+        },
+        "pair_03": {
+            "repository": "git@github.com:eclipse/kapua.git",
+            "structure_type": "class",
+            "smelly": {
+                "metrics": {
+                    "wmc": 0.2229299363057325,
+                    "cbo": 0.9032258064516129,
+                    "lcom": 0.19912472647702406
+                }
+            },
+            "clean": {
+                "metrics": {
+                    "wmc": 0.15286624203821655,
+                    "cbo": 0.45161290322580644,
+                    "lcom": 0.0
+                }
+            }
+        },
+        "pair_04": {
+            "repository": "git@github.com:apache/geode.git",
+            "structure_type": "class",
+            "smelly": {
+                "metrics": {
+                    "wmc": 0.28662420382165604,
+                    "cbo": 1.0,
+                    "lcom": 0.2188183807439825
+                }
+            },
+            "clean": {
+                "metrics": {
+                    "wmc": 0.025477707006369428,
+                    "cbo": 0.22580645161290322,
+                    "lcom": 0.01312910284463895
+                }
+            }
+        },
+        "pair_05": {
+            "repository": "git@github.com:apache/incubator-druid.git",
+            "structure_type": "class",
+            "smelly": {
+                "metrics": {
+                    "wmc": 0.14012738853503184,
+                    "cbo": 0.6774193548387096,
+                    "lcom": 0.0
+                }
+            },
+            "clean": {
+                "metrics": {
+                    "wmc": 0.12738853503184713,
+                    "cbo": 0.2903225806451613,
+                    "lcom": 0.0
+                }
+            }
+        }
+    },
+    "data_class": {
+        "pair_06": {
+            "repository": "git@github.com:eclipse/che.git",
+            "structure_type": "class",
+            "smelly": {
+                "metrics": {
+                    "wmc": 0.45161290322580644,
+                    "cbo": 0.2857142857142857,
+                    "lcom": 0.3076923076923077
+                }
+            },
+            "clean": {
+                "metrics": {
+                    "wmc": 0.16129032258064516,
+                    "cbo": 0.42857142857142855,
+                    "lcom": 0.02564102564102564
+                }
+            }
+        },
+        "pair_07": {
+            "repository": "git@github.com:eclipse/che.git",
+            "structure_type": "class",
+            "smelly": {
+                "metrics": {
+                    "wmc": 0.3870967741935484,
+                    "cbo": 0.8571428571428571,
+                    "lcom": 1.0
+                }
+            },
+            "clean": {
+                "metrics": {
+                    "wmc": 0.22580645161290322,
+                    "cbo": 0.42857142857142855,
+                    "lcom": 0.2564102564102564
+                }
+            }
+        },
+        "pair_08": {
+            "repository": "git@github.com:eclipse/hono.git",
+            "structure_type": "class",
+            "smelly": {
+                "metrics": {
+                    "wmc": 0.5161290322580645,
+                    "cbo": 0.0,
+                    "lcom": 0.48717948717948717
+                }
+            },
+            "clean": {
+                "metrics": {
+                    "wmc": 1.0,
+                    "cbo": 0.7142857142857143,
+                    "lcom": 0.8717948717948718
+                }
+            }
+        },
+        "pair_09": {
+            "repository": "git@github.com:google/error-prone-javac.git",
+            "structure_type": "class",
+            "smelly": {
+                "metrics": {
+                    "wmc": 0.03225806451612903,
+                    "cbo": 0.0,
+                    "lcom": 0.0
+                }
+            },
+            "clean": {
+                "metrics": {
+                    "wmc": 0.25806451612903225,
+                    "cbo": 0.8571428571428571,
+                    "lcom": 0.0
+                }
+            }
+        },
+        "pair_10": {
+            "repository": "git@github.com:google/j2objc.git",
+            "structure_type": "class",
+            "smelly": {
+                "metrics": {
+                    "wmc": 0.03225806451612903,
+                    "cbo": 0.0,
+                    "lcom": 0.0
+                }
+            },
+            "clean": {
+                "metrics": {
+                    "wmc": 0.0967741935483871,
+                    "cbo": 1.0,
+                    "lcom": 0.0
+                }
+            }
+        }
+    },
+    "feature_envy": {
+        "pair_11": {
+            "repository": "git@github.com:apache/zookeeper.git",
+            "structure_type": "function",
+            "smelly": {
+                "metrics": {
+                    "wmc": 0.10588235294117647,
+                    "cbo": 0.05555555555555555,
+                    "lcom": 0.0
+                }
+            },
+            "clean": {
+                "metrics": {
+                    "wmc": 0.24705882352941178,
+                    "cbo": 0.3888888888888889,
+                    "lcom": 0.25
+                }
+            }
+        },
+        "pair_12": {
+            "repository": "git@github.com:spring-projects/spring-framework.git",
+            "structure_type": "function",
+            "smelly": {
+                "metrics": {
+                    "wmc": 0.03529411764705882,
+                    "cbo": 0.05555555555555555,
+                    "lcom": 0.25
+                }
+            },
+            "clean": {
+                "metrics": {
+                    "wmc": 0.11764705882352941,
+                    "cbo": 0.1111111111111111,
+                    "lcom": 1.0
+                }
+            }
+        },
+        "pair_13": {
+            "repository": "git@github.com:apache/fineract.git",
+            "structure_type": "function",
+            "smelly": {
+                "metrics": {
+                    "wmc": 1.0,
+                    "cbo": 1.0,
+                    "lcom": 0.625
+                }
+            },
+            "clean": {
+                "metrics": {
+                    "wmc": 0.08235294117647059,
+                    "cbo": 0.05555555555555555,
+                    "lcom": 0.375
+                }
+            }
+        },
+        "pair_14": {
+            "repository": "git@github.com:google/sagetv.git",
+            "structure_type": "function",
+            "smelly": {
+                "metrics": {
+                    "wmc": 0.047058823529411764,
+                    "cbo": 0.1111111111111111,
+                    "lcom": 0.0
+                }
+            },
+            "clean": {
+                "metrics": {
+                    "wmc": 0.047058823529411764,
+                    "cbo": 0.05555555555555555,
+                    "lcom": 0.25
+                }
+            }
+        },
+        "pair_15": {
+            "repository": "git@github.com:facebook/buck.git",
+            "structure_type": "function",
+            "smelly": {
+                "metrics": {
+                    "wmc": 0.03529411764705882,
+                    "cbo": 0.05555555555555555,
+                    "lcom": 0.125
+                }
+            },
+            "clean": {
+                "metrics": {
+                    "wmc": 0.03529411764705882,
+                    "cbo": 0.05555555555555555,
+                    "lcom": 0.25
+                }
+            }
+        }
+    },
+    "long_method": {
+        "pair_16": {
+            "repository": "git@github.com:apache/ofbiz-framework.git",
+            "structure_type": "function",
+            "smelly": {
+                "metrics": {
+                    "wmc": 0.34444444444444444,
+                    "cbo": 0.5384615384615384,
+                    "lcom": 0.10714285714285714
+                }
+            },
+            "clean": {
+                "metrics": {
+                    "wmc": 0.06666666666666667,
+                    "cbo": 0.3076923076923077,
+                    "lcom": 0.03571428571428571
+                }
+            }
+        },
+        "pair_17": {
+            "repository": "git@github.com:spring-projects/grails-ide.git",
+            "structure_type": "function",
+            "smelly": {
+                "metrics": {
+                    "wmc": 0.45555555555555555,
+                    "cbo": 1.0,
+                    "lcom": 0.32142857142857145
+                }
+            },
+            "clean": {
+                "metrics": {
+                    "wmc": 0.06666666666666667,
+                    "cbo": 0.07692307692307693,
+                    "lcom": 0.10714285714285714
+                }
+            }
+        },
+        "pair_18": {
+            "repository": "git@github.com:apache/qpid-broker-j.git",
+            "structure_type": "function",
+            "smelly": {
+                "metrics": {
+                    "wmc": 0.6111111111111112,
+                    "cbo": 0.6153846153846154,
+                    "lcom": 0.39285714285714285
+                }
+            },
+            "clean": {
+                "metrics": {
+                    "wmc": 0.3111111111111111,
+                    "cbo": 0.3076923076923077,
+                    "lcom": 0.14285714285714285
+                }
+            }
+        },
+        "pair_19": {
+            "repository": "git@github.com:apache/olingo-odata4.git",
+            "structure_type": "function",
+            "smelly": {
+                "metrics": {
+                    "wmc": 0.4111111111111111,
+                    "cbo": 0.07692307692307693,
+                    "lcom": 0.25
+                }
+            },
+            "clean": {
+                "metrics": {
+                    "wmc": 0.2,
+                    "cbo": 0.23076923076923078,
+                    "lcom": 0.17857142857142858
+                }
+            }
+        },
+        "pair_20": {
+            "repository": "git@github.com:oracle/graal.git",
+            "structure_type": "function",
+            "smelly": {
+                "metrics": {
+                    "wmc": 1.0,
+                    "cbo": 0.6923076923076923,
+                    "lcom": 1.0
+                }
+            },
+            "clean": {
+                "metrics": {
+                    "wmc": 0.03333333333333333,
+                    "cbo": 0.07692307692307693,
+                    "lcom": 0.03571428571428571
+                }
+            }
+        }
+    }
+}
